@@ -28,6 +28,7 @@ try {
       db: {
         client: process.env.DB_CLIENT,
         connection: {
+          port: process.env.DB_CONNECTION_PORT,
           user: process.env.DB_CONNECTION_USER,
           database: process.env.DB_CONNECTION_DATABASE,
           password: process.env.DB_CONNECTION_PASSWORD,
@@ -35,6 +36,9 @@ try {
         migrations: {
           directory: resolve("./src/db/migrations"),
           stub: resolve("./src/db/migration.stub"),
+        },
+        seeds: {
+          directory: resolve("./src/db/seeds"),
         },
       },
       security: {

@@ -7,7 +7,8 @@ export const up = async (knex) => {
   await knex.schema.createTable("users", (table) => {
     table.increments("id")
     table.text("email").notNullable().unique()
-    table.text("password").notNullable()
+    table.text("passwordHash").notNullable()
+    table.text("passwordSalt").notNullable()
     table.text("firstName").notNullable()
     table.text("lastName").notNullable()
     table.integer("roleId").notNullable().references("id").inTable("roles")

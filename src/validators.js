@@ -38,4 +38,5 @@ export const queryOffsetValidator = yup
   .number()
   .integer()
   .min(0)
+  .default(0)
   .label("Query Offset")

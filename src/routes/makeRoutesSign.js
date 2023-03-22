@@ -16,7 +16,18 @@ const makeRoutesSign = ({ app, db }) => {
     }),
     mw(async (req, res) => {
       const { email, password } = req.data.body
-      const [user] = await db("users").where({ email })
+      const [user] = await db("users")
+        .where({ email })
+        .innerJoin("roles", "users.roleId", "roles.id")
+        .select(
+          "users.email",
+          "users.id",
+          "roles.name",
+          "users.firstName",
+          "users.lastName",
+          "users.passwordSalt",
+          "users.passwordHash"
+        )
 
       if (!user) {
         throw new InvalidCredentialsError()
@@ -33,6 +44,7 @@ const makeRoutesSign = ({ app, db }) => {
           payload: {
             user: {
               id: user.id,
+              role: user.name,
               fullName: `${user.firstName} ${user.lastName}`,
             },
           },

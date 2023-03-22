@@ -1,18 +1,20 @@
 import UserModel from "../db/models/UserModel.js"
 import { InvalidAccessError, NotFoundError } from "../errors.js"
+import hashPassword from "../hashPassword.js"
 import auth from "../middlewares/auth.js"
 import mw from "../middlewares/mw.js"
 import validate from "../middlewares/validate.js"
-import { sanitizeUser } from "../sanitizers.js"
+import { sanitizeUser } from "../sanitzers.js"
 import {
   emailValidator,
   idValidator,
   nameValidator,
+  passwordValidator,
   queryLimitValidator,
   queryOffsetValidator,
 } from "../validators.js"
 
-const makeRoutesUsers = ({ app }) => {
+const makeRoutesUsers = ({ app, db }) => {
   const checkIfUserExists = async (userId) => {
     const user = await UserModel.query().findById(userId)
 
@@ -23,9 +25,50 @@ const makeRoutesUsers = ({ app }) => {
     throw new NotFoundError()
   }
 
+  app.post(
+    "/createUser",
+    auth("admin"),
+    validate({
+      body: {
+        email: emailValidator.required(),
+        password: passwordValidator.required(),
+        firstName: nameValidator.required(),
+        lastName: nameValidator.required(),
+        roleId: idValidator.required(),
+      },
+    }),
+    mw(async (req, res) => {
+      const {
+        data: {
+          body: { email, password, firstName, lastName, roleId },
+        },
+      } = req
+
+      const user = await UserModel.query().findOne({ email })
+
+      if (user) {
+        res.send({ result: "ok" })
+
+        return
+      }
+
+      const [passwordHash, passwordSalt] = await hashPassword(password)
+      await db("users").insert({
+        email,
+        firstName,
+        lastName,
+        roleId,
+        passwordHash,
+        passwordSalt,
+      })
+
+      res.send({ result: "created" })
+    })
+  )
+
   app.get(
     "/users",
-    auth,
+    auth("admin"),
     validate({
       query: {
         limit: queryLimitValidator,
@@ -34,10 +77,7 @@ const makeRoutesUsers = ({ app }) => {
     }),
     mw(async (req, res) => {
       const { limit, offset } = req.data.query
-      const users = await UserModel.query()
-        .withGraphFetched("pets")
-        .limit(limit)
-        .offset(offset)
+      const users = await UserModel.query().limit(limit).offset(offset)
 
       res.send({ result: sanitizeUser(users) })
     })
@@ -49,10 +89,18 @@ const makeRoutesUsers = ({ app }) => {
       params: { userId: idValidator.required() },
     }),
     mw(async (req, res) => {
-      const { userId } = req.data.params
-      const user = await UserModel.query()
-        .findById(userId)
-        .withGraphFetched("pets(sanitize, fatestFirst)")
+      const {
+        data: {
+          params: { userId },
+        },
+        session: { user: sessionUser },
+      } = req
+
+      if (userId !== sessionUser.id && sessionUser.role !== "admin") {
+        throw new InvalidAccessError()
+      }
+
+      const user = await UserModel.query().findById(userId)
 
       if (!user) {
         return
@@ -64,7 +112,6 @@ const makeRoutesUsers = ({ app }) => {
 
   app.patch(
     "/users/:userId",
-    auth,
     validate({
       params: { userId: idValidator.required() },
       body: {
@@ -82,7 +129,7 @@ const makeRoutesUsers = ({ app }) => {
         session: { user: sessionUser },
       } = req
 
-      if (userId !== sessionUser.id) {
+      if (userId !== sessionUser.id && sessionUser.role !== "admin") {
         throw new InvalidAccessError()
       }
 
@@ -107,16 +154,26 @@ const makeRoutesUsers = ({ app }) => {
       params: { userId: idValidator.required() },
     }),
     mw(async (req, res) => {
-      const { userId } = req.data.params
-      const user = await checkIfUserExists(userId, res)
+      const {
+        session: { user: sessionUser },
+        data: {
+          params: { userId },
+        },
+      } = req
 
-      if (!user) {
-        return
+      if (sessionUser.id === userId || sessionUser.role === "admin") {
+        const user = await checkIfUserExists(userId, res)
+
+        if (!user) {
+          return
+        }
+
+        await UserModel.query().deleteById(userId)
+
+        res.send({ result: sanitizeUser(user) })
+      } else {
+        throw new InvalidAccessError()
       }
-
-      await UserModel.query().deleteById(userId)
-
-      res.send({ result: sanitizeUser(user) })
     })
   )
 }

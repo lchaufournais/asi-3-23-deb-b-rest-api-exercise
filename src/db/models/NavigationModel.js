@@ -1,5 +1,5 @@
-import BaseModel from "./BaseModel"
-import PageModel from "./PageModel"
+import BaseModel from "./BaseModel.js"
+import PageModel from "./PageModel.js"
 
 class NavigationModel extends BaseModel {
   static get tableName() {

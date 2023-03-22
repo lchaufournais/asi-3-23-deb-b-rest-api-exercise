@@ -5,7 +5,7 @@ import morgan from "morgan"
 import BaseModel from "./db/models/BaseModel.js"
 import handleError from "./middlewares/handleError.js"
 import makeRoutesSign from "./routes/makeRoutesSign.js"
-import makeRoutesUsers from "./routes/makeRoutesUsers.js"
+import makeRoutesUsers from "./routes/makeRoutesUser.js"
 
 const run = async (config) => {
   const app = express()
@@ -17,7 +17,7 @@ const run = async (config) => {
   const db = knex(config.db)
   BaseModel.knex(db)
 
-  makeRoutesUsers({ app })
+  makeRoutesUsers({ app, db })
   makeRoutesSign({ app, db })
 
   app.use(handleError)

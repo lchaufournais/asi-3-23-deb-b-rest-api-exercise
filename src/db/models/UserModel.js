@@ -1,6 +1,6 @@
-import BaseModel from "./BaseModel"
-import RoleModel from "./RoleModel"
-import PageModel from "./PageModel"
+import BaseModel from "./BaseModel.js"
+import RoleModel from "./RoleModel.js"
+import PageModel from "./PageModel.js"
 
 class UserModel extends BaseModel {
   static tableName = "users"
