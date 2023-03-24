@@ -20,14 +20,14 @@ export const up = async (knex) => {
     table.text("content").notNullable()
     table.text("url").unique().notNullable()
     table.integer("creatorId").notNullable().references("id").inTable("users")
-    table.timestamps(true, true, true)
+    table.timestamp("created_at").defaultTo(knex.fn.now())
     table.text("status").notNullable()
   })
 
   await knex.schema.createTable("relationPageUser", (table) => {
     table.integer("idPage").notNullable().references("id").inTable("pages")
     table.integer("idUser").notNullable().references("id").inTable("users")
-    table.timestamps(true, true, true)
+    table.timestamp("modified_at").defaultTo(knex.fn.now())
   })
 
   await knex.schema.createTable("navMenus", (table) => {

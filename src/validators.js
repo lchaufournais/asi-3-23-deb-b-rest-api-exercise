@@ -12,7 +12,7 @@ export const contentValidator = yup.string().label("Content is invalid")
 
 export const statusValidator = nameValidator.label("Status")
 
-export const urlValidator = yup.string().url("URL is invalid")
+export const urlValidator = yup.string().label("URL is invalid")
 
 export const firstNameValidator = nameValidator.label("First name")
 

@@ -2,17 +2,23 @@ import validate from "../middlewares/validate.js"
 import {
   contentValidator,
   idValidator,
+  queryLimitValidator,
+  queryOffsetValidator,
   statusValidator,
   titleValidator,
   urlValidator,
 } from "../validators.js"
 import mw from "../middlewares/mw.js"
 import PageModel from "../db/models/PageModel.js"
-import { InvalidAccessError, NotFoundError } from "../errors.js"
+import {
+  InvalidAccessError,
+  InvalidSessionError,
+  NotFoundError,
+} from "../errors.js"
 
 const makeRoutesPages = ({ app, db }) => {
-  const checkIfPageExists = async (pageId) => {
-    const user = await PageModel.query().findById(pageId)
+  const checkIfPageExists = async (url) => {
+    const user = await PageModel.query().findOne({ url })
 
     if (user) {
       return user
@@ -40,7 +46,7 @@ const makeRoutesPages = ({ app, db }) => {
       } = req
 
       if (sessionUser.role === "admin" || sessionUser.role === "manager") {
-        const page = await PageModel.query().findOne({ url })
+        const page = checkIfPageExists(url)
 
         if (page) {
           res.send({ result: "Already exist" })
@@ -66,7 +72,7 @@ const makeRoutesPages = ({ app, db }) => {
   )
 
   app.delete(
-    "/pages/:pageId",
+    "/pages/:url",
     validate({
       params: { pageId: idValidator.required() },
     }),
@@ -74,22 +80,123 @@ const makeRoutesPages = ({ app, db }) => {
       const {
         session: { user: sessionUser },
         data: {
-          params: { pageId },
+          params: { url },
         },
       } = req
 
       if (sessionUser.role === "admin" || sessionUser.role === "manager") {
-        const page = await checkIfPageExists(pageId, res)
+        const page = await checkIfPageExists(url)
 
         if (!page) {
           return
         }
 
-        await PageModel.query().deleteById(pageId)
+        await PageModel.query().where({ url: url }).delete()
 
         res.send({ result: page })
       } else {
         throw new InvalidAccessError()
+      }
+    })
+  )
+
+  app.get(
+    "/pages",
+    validate({
+      query: {
+        limit: queryLimitValidator,
+        offset: queryOffsetValidator,
+      },
+    }),
+    mw(async (req, res) => {
+      const { limit, offset } = req.data.query
+      const {
+        session: { user: sessionUser },
+      } = req
+
+      let pages
+      const query = PageModel.query().limit(limit).offset(offset)
+
+      if (sessionUser !== null) {
+        pages = await query
+      } else {
+        pages = await query.where({ status: "published" })
+      }
+
+      if (!pages) {
+        throw new NotFoundError()
+      }
+
+      res.send({ result: pages })
+    })
+  )
+
+  app.get(
+    "/pages/:url",
+    validate({
+      params: { url: urlValidator.required() },
+    }),
+    mw(async (req, res) => {
+      const {
+        data: {
+          params: { url },
+        },
+        session: { user: sessionUser },
+      } = req
+
+      const page = await PageModel.query().findOne({ url })
+
+      if (page.status !== "published" && sessionUser === null) {
+        throw new InvalidAccessError()
+      }
+
+      res.send({ result: page })
+    })
+  )
+
+  app.patch(
+    "/pages/:url",
+    validate({
+      params: { url: urlValidator.required() },
+      body: {
+        title: titleValidator,
+        content: contentValidator,
+        status: statusValidator,
+      },
+    }),
+    mw(async (req, res) => {
+      const {
+        data: {
+          body: { title, content, status },
+          params: { url },
+        },
+        session: { user: sessionUser },
+      } = req
+
+      if (sessionUser !== null) {
+        const pageExist = await checkIfPageExists(url)
+
+        if (!pageExist) {
+          return
+        }
+
+        const page = await PageModel.query().findOne({ url })
+        const updatedPage = await page.$query().updateAndFetch({
+          ...(title ? { title } : {}),
+          ...(content ? { content } : {}),
+          ...(status ? { status } : {}),
+        })
+
+        const idUser = sessionUser.id
+        const idPage = page.id
+
+        const relationPage = await db("relationPageUser").insert({
+          idPage,
+          idUser,
+        })
+        res.send({ result: updatedPage, relationPage })
+      } else {
+        throw new InvalidSessionError()
       }
     })
   )

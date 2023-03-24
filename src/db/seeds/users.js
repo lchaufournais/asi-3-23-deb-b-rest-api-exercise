@@ -3,6 +3,20 @@ import hashPassword from "../../hashPassword.js"
 
 export const seed = async (knex) => {
   await knex("users").del()
+  await knex("roles").del()
+
+  const nameRole = ["admin", "manager", "editor"]
+  const roles = []
+
+  for (let i = 0; i < 3; i++) {
+    const role = {
+      name: nameRole[i],
+    }
+    roles.push(role)
+  }
+
+  await knex("roles").insert(roles)
+
   const users = []
   for (let i = 0; i < 10; i++) {
     const [passwordHash, passwordSalt] = await hashPassword("123abcABC")
@@ -17,5 +31,5 @@ export const seed = async (knex) => {
     users.push(user)
   }
 
-  return knex("users").insert(users)
+  await knex("users").insert(users)
 }
