@@ -37,7 +37,7 @@ export const up = async (knex) => {
 
   await knex.schema.createTable("relationNavPage", (table) => {
     table.integer("idPage").notNullable().references("id").inTable("pages")
-    table.integer("navId").notNullable().references("id").inTable("navMenus")
+    table.integer("idNav").notNullable().references("id").inTable("navMenus")
   })
 }
 

@@ -59,7 +59,7 @@ const makeRoutesPages = ({ app, db }) => {
 
       if (sessionUser.role === "admin" || sessionUser.role === "manager") {
         const nav = checkIfNavExists(idNav)
-        const page = await PageModel.query().findOne({ url })
+        const page = await PageModel.query().where({ url: url })
 
         if (!nav) {
           res.send({ result: "Nav not found" })
@@ -85,8 +85,7 @@ const makeRoutesPages = ({ app, db }) => {
           .select("pages.id")
           .where({ url: url })
 
-        let idPage
-        tempo.map((t) => (idPage = t.id))
+        const idPage = tempo.id
 
         await db("relationNavPage").insert({
           idNav,

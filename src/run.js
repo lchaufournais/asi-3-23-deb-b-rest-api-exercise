@@ -7,6 +7,7 @@ import handleError from "./middlewares/handleError.js"
 import makeRoutesSign from "./routes/makeRoutesSign.js"
 import makeRoutesUsers from "./routes/makeRoutesUser.js"
 import makeRoutesPages from "./routes/makeRoutesPage.js"
+import makeRoutesNav from "./routes/makeRoutesNav.js"
 
 const run = async (config) => {
   const app = express()
@@ -21,6 +22,7 @@ const run = async (config) => {
   makeRoutesUsers({ app, db })
   makeRoutesSign({ app, db })
   makeRoutesPages({ app, db })
+  makeRoutesNav({ app, db })
 
   app.use(handleError)
   // handling 404: keep it always LAST!

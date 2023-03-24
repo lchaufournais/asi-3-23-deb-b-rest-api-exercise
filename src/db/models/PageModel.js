@@ -1,4 +1,5 @@
 import BaseModel from "./BaseModel.js"
+import NavigationModel from "./NavigationModel.js"
 import UserModel from "./UserModel.js"
 
 class PageModel extends BaseModel {
@@ -24,6 +25,18 @@ class PageModel extends BaseModel {
             to: "relationPageUser.idUser",
           },
           to: "users.id",
+        },
+      },
+      relationNavPage: {
+        relation: BaseModel.ManyToManyRelation,
+        modelClass: NavigationModel,
+        join: {
+          from: "pages.id",
+          through: {
+            from: "relationNavPage.idPage",
+            to: "relationNavPage.idNav",
+          },
+          to: "navMenus.id",
         },
       },
     }

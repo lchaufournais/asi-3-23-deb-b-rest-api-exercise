@@ -14,7 +14,7 @@ class NavigationModel extends BaseModel {
         join: {
           from: "navMenus.id",
           through: {
-            from: "relationNavPage.navId",
+            from: "relationNavPage.idNav",
             to: "relationNavPage.idPage",
           },
           to: "pages.id",
