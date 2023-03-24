@@ -6,6 +6,14 @@ export const nameValidator = yup
   .matches(/^[\p{L} -]+$/u, "Name is invalid")
   .label("Name")
 
+export const titleValidator = yup.string().label("Title is invalid")
+
+export const contentValidator = yup.string().label("Content is invalid")
+
+export const statusValidator = nameValidator.label("Status")
+
+export const urlValidator = yup.string().url("URL is invalid")
+
 export const firstNameValidator = nameValidator.label("First name")
 
 export const lastNameValidator = nameValidator.label("Last name")

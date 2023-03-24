@@ -62,7 +62,7 @@ const makeRoutesUsers = ({ app, db }) => {
         passwordSalt,
       })
 
-      res.send({ result: "created" })
+      res.send({ result: "ok" })
     })
   )
 

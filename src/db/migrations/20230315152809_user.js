@@ -21,7 +21,7 @@ export const up = async (knex) => {
     table.text("url").unique().notNullable()
     table.integer("creatorId").notNullable().references("id").inTable("users")
     table.timestamps(true, true, true)
-    table.text("Status").notNullable()
+    table.text("status").notNullable()
   })
 
   await knex.schema.createTable("relationPageUser", (table) => {
