@@ -25,7 +25,6 @@ const run = async (config) => {
   makeRoutesNav({ app, db })
 
   app.use(handleError)
-  // handling 404: keep it always LAST!
   app.use((req, res) => {
     res.status(404).send({ error: [`cannot POST ${req.url}`] })
   })
